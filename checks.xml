@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE module PUBLIC
+          "-//Puppy Crawl//DTD Check Configuration 1.3//EN"
+          "http://www.puppycrawl.com/dtds/configuration_1_3.dtd">
+
+<module name="Checker">
+
+    <property name="charset" value="UTF-8"/>
+    <property name="severity" value="warning"/>
+    <property name="localeCountry" value="CN"/>
+    <property name="localeLanguage" value="zh"/>
+
+    <!-- 文件类型 -->
+    <property name="fileExtensions" value="java, properties, xml"/>
+
+    <!-- 检查文件的长度（行） 限制单个文件2500以内 -->
+    <module name="FileLength">
+        <property name="max" value="2500"/>
+    </module>
+
+
+    <module name="TreeWalker">
+        <!-- 外部类需与文件名相同 -->
+        <module name="OuterTypeFilename"/>
+
+        <!-- 检查非法字符 -->
+        <module name="IllegalTokenText">
+            <property name="tokens" value="STRING_LITERAL, CHAR_LITERAL"/>
+            <property name="format" value="\\u00(08|09|0(a|A)|0(c|C)|0(d|D)|22|27|5(C|c))|\\(0(10|11|12|14|15|42|47)|134)"/>
+            <property name="message" value="不要使用非法字符(Unicode escape.)"/>
+        </module>
+
+        <!-- 避免使用Unicode转义字符 -->
+        <module name="AvoidEscapedUnicodeCharacters">
+            <property name="allowEscapesForControlCharacters" value="true"/>
+            <property name="allowByTailComment" value="true"/>
+            <property name="allowNonPrintableEscapes" value="true"/>
+        </module>
+
+        <!-- 限制列宽, 即每行字符数为100个, package, import, 超链接除外 -->
+        <module name="LineLength">
+            <property name="max" value="120"/>
+            <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
+        </module>
+
+        <!-- 必须导入类的完整路径，即不能使用*导入 -->
+        <module name="AvoidStarImport">
+        </module>
+
+        <!-- 检查是否导入的包没有使用 -->
+        <module name="UnusedImports">
+        </module>
+
+        <!-- 第三方导包的顺序 -->
+        <module name="CustomImportOrder">
+            <property name="sortImportsInGroupAlphabetically" value="true"/>
+            <property name="separateLineBetweenGroups" value="true"/>
+            <property name="customImportOrderRules" value="STATIC###THIRD_PARTY_PACKAGE"/>
+        </module>
+
+        <!-- 只能有一个顶级类/接口/Enum -->
+        <module name="OneTopLevelClass"/>
+
+        <!-- 不换行的情况, 默认package/import不换行 -->
+        <module name="NoLineWrap"/>
+
+        <!-- 代码块需要大括号-->
+        <module name="NeedBraces">
+        </module>
+
+        <!-- 左大括号不换行 使用如下样式
+        if (condition) {
+            ...
+        -->
+        <module name="LeftCurly"/>
+
+        <!-- try, catch, finally, if, else, do前的右大括号与之同行, 不换行 -->
+        <module name="RightCurly">
+            <property name="id" value="RightCurlySame"/>
+            <property name="tokens" value="LITERAL_TRY, LITERAL_CATCH, LITERAL_FINALLY, LITERAL_IF, LITERAL_ELSE, LITERAL_DO"/>
+        </module>
+
+        <!-- 右大括号单独一行的情况 -->
+        <module name="RightCurly">
+            <property name="id" value="RightCurlyAlone"/>
+            <property name="option" value="alone"/>
+            <property name="tokens" value="CLASS_DEF, METHOD_DEF, CTOR_DEF, LITERAL_FOR, LITERAL_WHILE, STATIC_INIT, INSTANCE_INIT"/>
+        </module>
+
+        <!-- 关键字, 符号前后有空格, 某些情况例外 -->
+        <module name="WhitespaceAround">
+            <!-- 空构造里面无需空格 public MyClass() {} -->
+            <property name="allowEmptyConstructors" value="true"/>
+
+            <!-- 空方法里面无需空格 public void func() {} -->
+            <property name="allowEmptyMethods" value="true"/>
+
+            <!-- 空类 public class Foo {} -->
+            <property name="allowEmptyTypes" value="true"/>
+
+            <!-- 空循环 while (i = 1) {} / for / do while -->
+            <property name="allowEmptyLoops" value="true"/>
+        </module>
+
+        <!-- 一行只有一个语句; -->
+        <module name="OneStatementPerLine"/>
+
+        <!-- 每行只能定义一个变量 -->
+        <module name="MultipleVariableDeclarations"/>
+
+        <!-- 使用String[] args 而非String args[] -->
+        <module name="ArrayTypeStyle"/>
+
+        <!-- Switch 必须有default分支 -->
+        <module name="MissingSwitchDefault"/>
+
+        <!-- 检查switch中case后是否加入了跳出语句，例如：return、break、throw、continue -->
+        <module name="FallThrough"/>
+
+        <!-- 查是否在long类型是否定义了大写的L, 字母小写l和数字1很相似, 容易混淆 -->
+        <module name="UpperEll"/>
+
+        <!-- 修饰符的顺序，参考http://docs.oracle.com/javase/specs/jls/se8/html/jls-8.html
+            public
+            protected
+            private
+            abstract
+            default
+            static
+            final
+            transient
+            volatile
+            synchronized
+            native
+            strictfp
+         -->
+        <module name="ModifierOrder"/>
+
+        <!-- 空行设定, package, import, class, interface, enum, static块, method, 构造, 变量之间 -->
+        <module name="EmptyLineSeparator">
+            <!-- 成员之间可忽略, 建议还是分类空行分隔 -->
+            <property name="allowNoEmptyLineBetweenFields" value="true"/>
+        </module>
+
+        <!-- 分行方式, 操作符在前, 如下
+        someVariable = aBigVariableNameToMakeThings + "this may work"
+                   + lookVeryInteresting;
+
+        带.分行 .在下一行, 如下
+        Picasso.with(context)
+                .load("someUrl")
+                .into(imageView);
+        -->
+        <module name="SeparatorWrap">
+            <property name="id" value="SeparatorWrapDot"/>
+            <property name="tokens" value="DOT"/>
+            <property name="option" value="nl"/>
+        </module>
+
+        <!-- 分行方式
+        带,分行 , 在上一行, 如下:
+        AnalyticsTrackerUtil.onAnalyticsTrackEvent(getPageInfo().getPageName(),
+                "Submit", map, 0);
+        -->
+        <module name="SeparatorWrap">
+            <property name="id" value="SeparatorWrapComma"/>
+            <property name="tokens" value="COMMA"/>
+            <property name="option" value="EOL"/>
+        </module>
+
+        <!-- 包名全小写 -->
+        <module name="PackageName">
+            <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$"/>
+            <message key="name.invalidPattern" value="包名 ''{0}'' 须全小写.(正则 ''{1}'')."/>
+        </module>
+
+        <!-- 类, 接口, Enum名 "^[A-Z][a-zA-Z0-9]*$" -->
+        <module name="TypeName">
+            <message key="name.invalidPattern" value=" ''{0}'' 须大写开头的驼峰命名方式.(正则 ''{1}'')."/>
+        </module>
+
+        <!-- 方法名 -->
+        <module name="MethodName">
+            <property name="format" value="^[a-z][a-z0-9][a-zA-Z0-9_]*$"/>
+        </module>
+
+        <!-- 成员名 m开头, boolean型is, has开头 -->
+        <module name="MemberName">
+            <property name="format" value="^(m|is|has)[A-Z][a-zA-Z0-9]*$"/>
+            <message key="name.invalidPattern" value="类成员 ''{0}'' 须以''m/is/has''开头的驼峰命名方式. (正则 ''{1}'')."/>
+        </module>
+
+        <!-- static, non-final fields 以s开头-->
+        <module name="StaticVariableName">
+            <property name="format" value="^s[A-Z][a-zA-Z0-9]*$"/>
+            <message key="name.invalidPattern" value="静态变量成员 ''{0}'' 须以''s''开头的驼峰命名方式. (正则 ''{1}'')."/>
+        </module>
+
+        <!-- static final常量, "^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$" -->
+        <module name="ConstantName">
+            <message key="name.invalidPattern" value="常量 ''{0}'' 须全大写, 字母开头, 单词'_'分隔. (正则 ''{1}'')."/>
+        </module>
+
+        <!-- 参数名, "^[a-z][a-zA-Z0-9]*$", Override的方法参数除外 -->
+        <module name="ParameterName">
+            <property name="ignoreOverridden" value="true"/>
+            <message key="name.invalidPattern" value="参数名 ''{0}'' 须小写开头的驼峰命名方式. (正则 ''{1}'')."/>
+        </module>
+
+        <!-- 本地变量, "^[a-z][a-zA-Z0-9]*$" for循环中可以使用单个字符的变量 -->
+        <module name="LocalVariableName">
+            <property name="allowOneCharVarInForLoop" value="true"/>
+            <message key="name.invalidPattern" value="局部变量 ''{0}'' 须小写开头的驼峰命名方式. (正则 ''{1}''). for循环中可以使用单个字符的变量."/>
+        </module>
+
+
+        <!-- 泛型参数 -->
+        <module name="ClassTypeParameterName">
+            <property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)"/>
+        </module>
+        <module name="MethodTypeParameterName">
+            <property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)"/>
+        </module>
+        <module name="InterfaceTypeParameterName">
+            <property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)"/>
+        </module>
+
+        <!-- 类中不能有finalize()方法 -->
+        <module name="NoFinalizer"/>
+
+        <!-- 检查"<>"符号两边的空格 http://checkstyle.sourceforge.net/config_whitespace.html#GenericWhitespace -->
+        <module name="GenericWhitespace"/>
+
+        <!-- 缩进 -->
+        <module name="Indentation"/>
+
+        <!-- 将缩写词当成单词, 例如HTTP as Http -->
+        <module name="AbbreviationAsWordInName">
+            <property name="ignoreFinal" value="false"/>
+            <property name="allowedAbbreviationLength" value="1"/>
+        </module>
+
+        <!-- 重写方法放一起, 按参数个数少到多排序 -->
+        <module name="OverloadMethodsDeclarationOrder"/>
+
+        <!-- 方法参数Padding. -->
+        <module name="MethodParamPad"/>
+
+        <module name="ParenPad"/>
+
+        <!-- 操作符的换行检查, 操作符不在行末 -->
+        <module name="OperatorWrap">
+            <property name="option" value="NL"/>
+            <property name="tokens" value="BAND, BOR, BSR, BXOR, DIV, EQUAL, GE, GT, LAND, LE, LITERAL_INSTANCEOF, LOR, LT, MINUS, MOD, NOT_EQUAL, PLUS, QUESTION, SL, SR, STAR, METHOD_REF "/>
+        </module>
+
+        <!-- Annotation注解的位置, 对于类, 接口, Enum, 方法, 构造在其上方, 一行一个 -->
+        <module name="AnnotationLocation">
+            <property name="id" value="AnnotationLocationMostCases"/>
+            <property name="tokens" value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, CTOR_DEF"/>
+        </module>
+
+        <!-- 对于变量, 可以同行, 一行多个 -->
+        <module name="AnnotationLocation">
+            <property name="id" value="AnnotationLocationVariables"/>
+            <property name="tokens" value="VARIABLE_DEF"/>
+            <property name="allowSamelineMultipleAnnotations" value="true"/>
+        </module>
+
+        <!-- Javadoc注释, @符号之后紧跟描述, 没有空格, 例如@param, @author -->
+        <module name="NonEmptyAtclauseDescription"/>
+
+        <!-- Javadoc中@的换行缩进, 默认4 -->
+        <module name="JavadocTagContinuationIndentation"/>
+
+        <!-- Javadoc注释 格式检查 -->
+        <module name="SummaryJavadoc">
+            <property name="forbiddenSummaryFragments" value="^@return the *|^This method returns |^A [{]@code [a-zA-Z0-9]+[}]( is a )"/>
+        </module>
+
+        <!-- Javadoc注释 @标签的顺序 -->
+        <module name="AtclauseOrder">
+            <property name="tagOrder" value="@param, @return, @throws, @deprecated"/>
+            <property name="target" value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, CTOR_DEF, VARIABLE_DEF"/>
+        </module>
+
+        <!-- public方法的必须加Javadoc注释 -->
+        <module name="JavadocMethod">
+            <property name="scope" value="public"/>
+            <property name="allowMissingParamTags" value="true"/>
+            <property name="allowMissingThrowsTags" value="true"/>
+            <property name="allowMissingReturnTag" value="true"/>
+            <property name="allowedAnnotations" value="Override, Test"/>
+            <property name="allowThrowsTagsForSubclasses" value="true"/>
+            <property name="tokens" value="METHOD_DEF"/>
+            <!-- newInstance, getInstance, set/get除外 -->
+            <property name="ignoreMethodNamesRegex" value="^newInstance|^getInstance|^set.*$|^get.*$"/>
+            <!--允许get set 方法没有注释-->
+            <property name="allowMissingPropertyJavadoc" value="true"/>
+        </module>
+
+        <!-- 检查catch异常是否空处理, 如果exception取名ignore除外 -->
+        <module name="EmptyCatchBlock">
+            <property name="exceptionVariableName" value="ignore"/>
+        </module>
+
+        <!-- 注释的缩进, 需与代码对齐 -->
+        <module name="CommentsIndentation"/>
+
+        <!-- 比较时已知字符串在前, 例如
+        String nullString = null;
+        nullString.equals("My_Sweet_String");
+        应该这样写:
+        String nullString = null;
+        "My_Sweet_String".equals(nullString);
+        -->
+        <module name="EqualsAvoidNull"/>
+
+    </module>
+</module>

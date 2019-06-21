@@ -1,0 +1,98 @@
+println "--------------------_target_name_-----------------------------"
+println "Build _target_name_ with:\n\tbuildToolsVersion = " + System.properties['buildToolsVersion']
+println "\tandroidGradlePluginVersion = " + System.properties['androidGradlePluginVersion']
+println "\tfile.encoding = " + System.properties['file.encoding']
+println "\tCharset.defaultCharset() = " + java.nio.charset.Charset.defaultCharset().toString()
+println "--------------------_target_name_-----------------------------\n"
+
+configurations.all {
+    //如果需要更新Maven同一版本的库，取消下一行注释
+    // resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
+//配置extra属性之后，后面的子project需要用到这些属性的地方都直接调用rootProject.ext.XXX，避免修改的时候需要每个project里面都需要去检查、修改
+
+ext {
+    compileSdkVersion = 21
+    buildToolsVersion = System.properties['buildToolsVersion']
+    minSdkVersion = 14
+    targetSdkVersion = 21
+}
+
+
+//每个project构建过程中，都需要依赖gradle构建工具，所以在rootProject里面写一次就好了。
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            url 'http://mvnrepo.alibaba-inc.com/mvn/repository'
+        }
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:' + System.properties['androidGradlePluginVersion']
+    }
+}
+
+allprojects {
+    //指定maven仓库，这里面的指定方式和pom类似：设置多个仓库,构建的时候会从上往下找，上面的仓库地址找不到的时候再去下一个地址找
+    repositories {
+        mavenLocal()
+
+        maven {
+            url "http://mvnrepo.alibaba-inc.com/mvn/repository"
+        }
+    }
+
+    //指定编码类型
+    tasks.withType(JavaCompile) {
+        options.encoding = "UTF-8"
+    }
+    def deployVersion = System.getProperty('deployVersion')
+    if (null != deployVersion) {
+        version = deployVersion
+    }
+}
+
+
+
+class TimingsListener implements TaskExecutionListener, BuildListener {
+    private Clock clock
+    private timings = []
+
+    @Override
+    void buildFinished(BuildResult result) {
+        println "Task timings:"
+        for (timing in timings) {
+            if (timing[0] >= 50) {
+                printf "%7sms  %s\n", timing
+            }
+        }
+    }
+
+    @Override
+    void buildStarted(Gradle gradle) {}
+
+    @Override
+    void projectsEvaluated(Gradle gradle) {}
+
+    @Override
+    void projectsLoaded(Gradle gradle) {}
+
+    @Override
+    void settingsEvaluated(Settings settings) {}
+
+    @Override
+    void beforeExecute(Task task) {
+        clock = new org.gradle.util.Clock()
+    }
+
+    @Override
+    void afterExecute(Task task, TaskState state) {
+        def miliseconds = clock.timeInMs
+        timings.add([miliseconds, task.path])
+        task.project.logger.warn "${task.path} took ${miliseconds}ms"
+    }
+}
+
+gradle.addListener new TimingsListener()

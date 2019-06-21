@@ -1,0 +1,20 @@
+include ':Main'
+
+if (!System.properties['buildToolsVersion']) {
+    System.properties['buildToolsVersion'] = "29.0.0"
+}
+
+//gradle plugin version
+if (!System.properties['androidGradlePluginVersion']) {
+    System.properties['androidGradlePluginVersion'] = "3.4.1"
+}
+
+//apt plugin version
+if (!System.properties['androidAptPluginVersion']) {
+    System.properties['androidAptPluginVersion'] = "1.8"
+}
+
+//compile Sdk version
+if (!System.properties['compileSdkVersion']) {
+    System.properties['compileSdkVersion'] = 29
+}

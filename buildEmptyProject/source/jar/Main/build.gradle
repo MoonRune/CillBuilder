@@ -1,0 +1,67 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'project-report'
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+}
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+sourceSets{
+    main{
+        java{
+            srcDir 'src/main/java'
+        }
+        resources{
+            srcDir 'src/main/resources'
+        }
+    }
+
+}
+
+configurations.all {
+    //如果需要更新Maven同一版本的库，取消下一行注释
+     resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
+
+//preBuild.dependsOn projectReport
+
+uploadArchives {
+    repositories {
+        //获取平台或者是打包脚本中的版本参数对应的要打包的版本信息
+        def targetVersion = allprojects.targetVersion[0];
+        def deployVersion = System.getProperty('deployVersion')
+        if (null != deployVersion) {
+            targetVersion = deployVersion
+        }
+
+
+        mavenDeployer {
+            pom.project {
+                pom.groupId = '_package_name_'
+                pom.artifactId = '_target_name_'
+                pom.version = targetVersion
+                pom.packaging = 'aar'
+                pom.name = '_target_name_'
+            }
+            if (pom.version.toString().endsWith("-SNAPSHOT")) {
+                repository(
+                        url: _nexus_snapshots_url_) {
+                    authentication(
+                            userName: _nexus_snapshots_user_name_,
+                            password: _nexus_snapshots_user_password_)
+                }
+            } else {
+                repository(
+                        url: _nexus_releases_url_) {
+                    authentication(
+                            userName: _nexus_releases_user_name_),
+                            password: _nexus_releases_user_password_)
+                }
+            }
+        }
+    }
+}

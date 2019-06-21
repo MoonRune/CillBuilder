@@ -1,0 +1,80 @@
+include ':app'
+
+if (!System.properties['buildToolsVersion']) {
+    System.properties['buildToolsVersion'] = "29.0.0"
+}
+
+//gradle plugin version
+if (!System.properties['androidGradlePluginVersion']) {
+    System.properties['androidGradlePluginVersion'] = "3.4.1"
+}
+
+//apt plugin version
+if (!System.properties['androidAptPluginVersion']) {
+    System.properties['androidAptPluginVersion'] = "1.8"
+}
+
+//compile Sdk version
+if (!System.properties['compileSdkVersion']) {
+    System.properties['compileSdkVersion'] = 29
+}
+
+
+//处理源码依赖与SDK依赖的具体函数
+Object dep(String projectName, String projectPath) {
+    boolean useSource = false;
+    boolean autoCloneSource = false;
+    if (properties.get("USE_SOURCE") != null) {
+        if (properties.get("USE_SOURCE").equalsIgnoreCase("false")) {
+            useSource = false;
+        } else if (properties.get("USE_SOURCE").equalsIgnoreCase("true")) {
+            useSource = true;
+        }
+    }
+
+    //获取自动下载源码开关
+    if (properties.get("AUTO_CLONE_SOURCE") != null) {
+        if (properties.get("AUTO_CLONE_SOURCE").equalsIgnoreCase("true")) {
+            autoCloneSource = true;
+        }
+    }
+
+    if (useSource) {
+        if (properties.get(projectName + "_dep_type") != null &&
+                properties.get(projectName + "_dep_type").equalsIgnoreCase("project")) {
+            File projectFile = new File(projectPath);
+            //自动获取源码的开关是开着的,并且之前没有获取过源码,则进行源码的下载
+            if (autoCloneSource && !projectFile.exists()) {
+                try {
+                    String gitLibraryUrl = properties.get("GIT_LIBRARY_URL");
+                    cloneProjectSourceCode(gitLibraryUrl, projectName, projectPath);
+                } catch (Throwable tr) {
+                    tr.printStackTrace();
+                }
+            }
+            if (projectFile.exists()) {
+                println("settings useSource is true, project [" + projectName + "] source will be included!")
+                include ':' + projectName
+                project(':' + projectName).projectDir = projectFile;
+            } else {
+                System.err.println("settings useSource is true, project [" + projectName + "] source is not exist. This project still use MAVEN sdk")
+            }
+        }
+    }
+}
+
+/**
+ * 执行工程源码的clone操作
+ * @param projectName
+ */
+void cloneProjectSourceCode(String gitLibraryUrl, String projectName, String projectPath) {
+    File projectFile = new File(projectPath);
+    //路径已经存在,则直接返回
+    if (projectFile.exists()) {
+        return;
+    }
+    String parentPath = projectFile.getParent();
+    String procDef = "git clone " + gitLibraryUrl + projectName + ".git " + parentPath;
+    def proc = procDef.execute();
+    int output = proc.waitFor();
+}

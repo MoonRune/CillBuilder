@@ -1,0 +1,16 @@
+.DS_Store
+.gradle/
+build/
+gen/
+bin/
+.idea/
+out/
+target/
+gen-external-apklibs/
+classes
+local.properties
+*.apk
+.project
+*.iml
+Main/mapping.txt
+Main/build/

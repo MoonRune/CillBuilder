@@ -1,0 +1,187 @@
+boolean useSource = false;
+if (project.ext.properties.get("USE_SOURCE") != null) {
+    if (project.ext.properties.get("USE_SOURCE").equals("false")) {
+        useSource = false;
+    } else if (project.ext.properties.get("USE_SOURCE").equals("true")) {
+        useSource = true;
+    }
+}
+if (project.ext.properties.get("_target_name_" + "_dep_type").equals("project")){
+    useSource = useSource&&true
+}
+println("isLibrary:"+useSource)
+if (useSource == true){
+    apply plugin: 'com.android.library'
+}else{
+    apply plugin: 'com.android.application'
+}
+apply plugin: 'maven'
+apply plugin: 'project-report'
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+}
+
+configurations.all {
+    //如果需要更新Maven同一版本的库，取消下一行注释
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+            }
+        }
+        compileOptions {
+            sourceCompatibility JavaVersion.VERSION_1_8
+            targetCompatibility JavaVersion.VERSION_1_8
+        }
+    }
+
+    lintOptions {
+        abortOnError false
+        checkReleaseBuilds false
+        lintConfig file("lint.xml")
+        htmlReport true
+    }
+
+    dexOptions {
+        jumboMode = true
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'src/main/AndroidManifest.xml'
+            java.srcDirs = ['src/main/java']
+            aidl.srcDirs = ['src/main/java']
+            renderscript.srcDirs = ['src']
+            res.srcDirs = ['src/main/res']
+            assets.srcDirs = ['src/main/assets']
+            jniLibs.srcDirs = ['libs', 'jni']
+        }
+
+        androidTest {
+            java.srcDirs = ['src/test/java']
+            res.srcDirs = ['src/test/res']
+            manifest.srcFile 'src/test/AndroidManifest.xml'
+        }
+
+        androidTest.setRoot('src/test') //增加测试根目录
+
+        // Move the build types to build-types/<type>
+        // For instance, build-types/debug/java, build-types/debug/AndroidManifest.xml, ...
+        // This moves them out of them default location under src/<type>/... which would
+        // conflict with src/ being used by the main source set.
+        // Adding new build types or product flavors should be accompanied
+        // by a similar customization.
+        debug.setRoot('build-types/debug')
+        release.setRoot('build-types/release')
+    }
+
+    packagingOptions {
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'androidx.appcompat:appcompat:1.0.2'
+    //##请根据实际需要进行依赖项的新增与删除
+}
+
+preBuild.dependsOn projectReport
+uploadArchives {
+    repositories {
+
+        //获取平台或者是打包脚本中的版本参数对应的要打包的版本信息
+        def targetVersion = allprojects.targetVersion[0];
+        def deployVersion = System.getProperty('deployVersion')
+        if (null != deployVersion) {
+            targetVersion = deployVersion
+        }
+
+
+        mavenDeployer {
+            pom.project {
+                pom.groupId = '_package_name_'
+                pom.artifactId = '_target_name_'
+                pom.version = targetVersion
+                pom.packaging = 'aar'
+                pom.name = '_target_name_'
+            }
+            if (pom.version.toString().endsWith("-SNAPSHOT")) {
+                repository(
+                        url: _nexus_snapshots_url_) {
+                    authentication(
+                            userName: _nexus_snapshots_user_name_,
+                            password: _nexus_snapshots_user_password_)
+                }
+            } else {
+                repository(
+                        url: _nexus_releases_url_) {
+                    authentication(
+                            userName: _nexus_releases_user_name_,
+                            password: _nexus_releases_user_password_)
+                }
+            }
+        }
+    }
+}
+
+//如果SDK作为源码工程关联到主工程中去,那SDK本身依赖到的SDK如果主工程也已经源码关联,则子工程在主工程的关联关系中应该也是完整的
+Object getRealDep(String projectName, String aarName) {
+    println "\nready to handle project [" + projectName + "] real dependency"
+    boolean useSource = false;
+    if (project.ext.properties.get("USE_SOURCE") != null) {
+        if (project.ext.properties.get("USE_SOURCE").equalsIgnoreCase("false")) {
+            useSource = false;
+        } else if (project.ext.properties.get("USE_SOURCE").equalsIgnoreCase("true")) {
+            useSource = true;
+        }
+    }
+
+    if (useSource) {
+        if (project.ext.properties.get(projectName + "_dep_type") == null) {
+            println(projectName + "_dep_type properties is null, use [" + aarName + "]")
+            return aarName
+        } else {
+            if (project.ext.properties.get(projectName + "_dep_type").equalsIgnoreCase("aar")) {
+                println "compile aar [" + aarName + "]"
+                return aarName
+            } else if (project.ext.properties.get(projectName + "_dep_type").equalsIgnoreCase("project")) {
+                try {
+                    Project project = project(":" + projectName)
+                    if (project != null && project.getProjectDir() != null && project.getProjectDir().exists()) {
+                        println "compile project source [" + projectName + ']'
+                        return project;
+                    } else {
+                        println "compile aar [" + aarName + "]"
+                    }
+                } catch (Throwable tr) {
+                    println "project [" + projectName + '] is not exist, use aar[' + aarName + ']'
+                }
+                return aarName
+            } else {
+                //默认都返回sdk的形式的依赖
+                println "compile sdk dependency [" + aarName + ']'
+                return aarName;
+            }
+        }
+    } else {
+        println "compile aar [" + aarName + "]"
+        return aarName
+    }
+}
